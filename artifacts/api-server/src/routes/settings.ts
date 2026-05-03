@@ -19,12 +19,13 @@ router.get("/settings", async (_req, res) => {
 
 // PATCH /settings
 router.patch("/settings", async (req, res) => {
-  const body = req.body as { moviesDir?: string; vlcPath?: string };
+  const body = req.body as { moviesDir?: string; vlcPath?: string; omdbApiKey?: string };
   const current = await getOrCreateSettings();
 
   const updates: Partial<typeof settingsTable.$inferInsert> = {};
   if (typeof body.moviesDir === "string") updates.moviesDir = body.moviesDir;
   if (typeof body.vlcPath === "string") updates.vlcPath = body.vlcPath;
+  if (typeof body.omdbApiKey === "string") updates.omdbApiKey = body.omdbApiKey;
 
   const [updated] = await db
     .update(settingsTable)

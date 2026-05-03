@@ -1,5 +1,5 @@
 import { Router, type IRouter } from "express";
-import { eq, ilike, desc, asc, and, gte, sql } from "drizzle-orm";
+import { eq, like, desc, asc, and, gte, sql } from "drizzle-orm";
 import { db, moviesTable } from "@workspace/db";
 import fs from "fs";
 import path from "path";
@@ -67,19 +67,19 @@ function getSubtitleFiles(folderPath: string): Array<{ name: string; path: strin
 }
 
 function toDto(m: typeof moviesTable.$inferSelect) {
-  return { ...m, createdAt: m.createdAt.toISOString() };
+  return { ...m };
 }
 
 // GET /movies
 router.get("/movies", async (req, res) => {
   const params = ListMoviesQueryParams.parse(req.query);
 
-  const conditions: ReturnType<typeof ilike>[] = [];
-  if (params.search) conditions.push(ilike(moviesTable.title, `%${params.search}%`));
-  if (params.genre) conditions.push(ilike(moviesTable.genre, `%${params.genre}%`));
-  if (params.director) conditions.push(ilike(moviesTable.director, `%${params.director}%`));
-  if (params.actor) conditions.push(ilike(moviesTable.actors, `%${params.actor}%`));
-  if (params.year) conditions.push(ilike(moviesTable.year, `%${params.year}%`));
+  const conditions: ReturnType<typeof like>[] = [];
+  if (params.search) conditions.push(like(moviesTable.title, `%${params.search}%`));
+  if (params.genre) conditions.push(like(moviesTable.genre, `%${params.genre}%`));
+  if (params.director) conditions.push(like(moviesTable.director, `%${params.director}%`));
+  if (params.actor) conditions.push(like(moviesTable.actors, `%${params.actor}%`));
+  if (params.year) conditions.push(like(moviesTable.year, `%${params.year}%`));
   if (params.watched === "true") conditions.push(eq(moviesTable.watched, true));
   if (params.watched === "false") conditions.push(eq(moviesTable.watched, false));
 
@@ -88,13 +88,13 @@ router.get("/movies", async (req, res) => {
   else if (conditions.length > 1) query = query.where(and(...conditions));
 
   if (params.minRating) {
-    query = query.where(gte(sql`CAST(${moviesTable.imdbRating} AS DECIMAL)`, parseFloat(params.minRating)));
+    query = query.where(gte(sql`CAST(${moviesTable.imdbRating} AS REAL)`, parseFloat(params.minRating)));
   }
 
   const sort = params.sort ?? "added";
   if (sort === "title") query = query.orderBy(asc(moviesTable.title));
   else if (sort === "year") query = query.orderBy(desc(moviesTable.year));
-  else if (sort === "rating") query = query.orderBy(desc(moviesTable.imdbRating));
+  else if (sort === "rating") query = query.orderBy(desc(sql`CAST(${moviesTable.imdbRating} AS REAL)`));
   else query = query.orderBy(desc(moviesTable.createdAt));
 
   const movies = await query;
@@ -138,13 +138,13 @@ router.get("/movies/stats", async (_req, res) => {
 
 // POST /movies/scan
 router.post("/movies/scan", async (req, res) => {
-  const apiKey = process.env["OMDB_API_KEY"];
+  const settings = await getOrCreateSettings();
+  // API key: prefer stored setting, fall back to environment variable
+  const apiKey = settings.omdbApiKey || process.env["OMDB_API_KEY"];
   if (!apiKey) {
-    res.status(500).json({ error: "OMDB_API_KEY not configured" });
+    res.status(500).json({ error: "OMDb API key not configured. Add it in Settings → OMDb API Key." });
     return;
   }
-
-  const settings = await getOrCreateSettings();
   const moviesDir = settings.moviesDir;
 
   let folderNames: string[] = [];

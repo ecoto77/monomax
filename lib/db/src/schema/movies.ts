@@ -1,9 +1,9 @@
-import { pgTable, serial, text, timestamp, boolean, integer } from "drizzle-orm/pg-core";
+import { sqliteTable, integer, text } from "drizzle-orm/sqlite-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 
-export const moviesTable = pgTable("movies", {
-  id: serial("id").primaryKey(),
+export const moviesTable = sqliteTable("movies", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
   title: text("title").notNull(),
   year: text("year").notNull(),
   imdbId: text("imdb_id"),
@@ -16,11 +16,11 @@ export const moviesTable = pgTable("movies", {
   poster: text("poster"),
   folderName: text("folder_name").notNull().unique(),
   folderPath: text("folder_path").notNull(),
-  notFound: boolean("not_found").default(false).notNull(),
-  watched: boolean("watched").default(false).notNull(),
+  notFound: integer("not_found", { mode: "boolean" }).default(false).notNull(),
+  watched: integer("watched", { mode: "boolean" }).default(false).notNull(),
   userRating: integer("user_rating"),
   notes: text("notes"),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
+  createdAt: text("created_at").notNull().$defaultFn(() => new Date().toISOString()),
 });
 
 export const insertMovieSchema = createInsertSchema(moviesTable).omit({ id: true, createdAt: true });

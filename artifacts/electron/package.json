@@ -1,0 +1,22 @@
+{
+  "name": "@workspace/electron",
+  "version": "1.0.0",
+  "private": true,
+  "main": "dist/main.js",
+  "scripts": {
+    "build:frontend": "cross-env PORT=3000 BASE_PATH=/ pnpm --filter @workspace/movie-library exec vite build",
+    "build:server": "pnpm --filter @workspace/api-server run build",
+    "build:app": "node build.mjs",
+    "build:win": "pnpm run build:frontend && pnpm run build:server && pnpm run build:app && electron-builder --win --x64",
+    "build:win:portable": "pnpm run build:frontend && pnpm run build:server && pnpm run build:app && electron-builder --win --x64 --dir",
+    "electron:dev": "node build.mjs && electron ."
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "cross-env": "^7.0.3",
+    "electron": "^36.2.1",
+    "electron-builder": "^25.1.8",
+    "esbuild": "0.27.3",
+    "typescript": "^5.9.0"
+  }
+}

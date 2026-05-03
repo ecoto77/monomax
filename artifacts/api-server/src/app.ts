@@ -1,5 +1,6 @@
 import express, { type Express } from "express";
 import cors from "cors";
+import path from "path";
 import pinoHttp from "pino-http";
 import router from "./routes";
 import { logger } from "./lib/logger";
@@ -30,5 +31,15 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 app.use("/api", router);
+
+// When RENDERER_PATH is set (Electron production mode), serve the built frontend
+const rendererPath = process.env["RENDERER_PATH"];
+if (rendererPath) {
+  app.use(express.static(rendererPath));
+  // SPA fallback — return index.html for any route not handled above
+  app.use((_req, res) => {
+    res.sendFile(path.join(rendererPath, "index.html"));
+  });
+}
 
 export default app;

@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Settings as SettingsIcon, Folder, Monitor, CheckCircle } from "lucide-react";
+import { Settings as SettingsIcon, Folder, Monitor, Key, CheckCircle, Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -10,6 +10,7 @@ interface AppSettings {
   id: number;
   moviesDir: string;
   vlcPath: string;
+  omdbApiKey: string;
 }
 
 async function fetchSettings(): Promise<AppSettings> {
@@ -39,11 +40,14 @@ export default function Settings() {
 
   const [moviesDir, setMoviesDir] = useState("");
   const [vlcPath, setVlcPath] = useState("");
+  const [omdbApiKey, setOmdbApiKey] = useState("");
+  const [showApiKey, setShowApiKey] = useState(false);
 
   useEffect(() => {
     if (settings) {
       setMoviesDir(settings.moviesDir);
       setVlcPath(settings.vlcPath);
+      setOmdbApiKey(settings.omdbApiKey ?? "");
     }
   }, [settings]);
 
@@ -59,10 +63,14 @@ export default function Settings() {
   });
 
   const handleSave = () => {
-    mutation.mutate({ moviesDir, vlcPath });
+    mutation.mutate({ moviesDir, vlcPath, omdbApiKey });
   };
 
-  const isDirty = settings && (moviesDir !== settings.moviesDir || vlcPath !== settings.vlcPath);
+  const isDirty = settings && (
+    moviesDir !== settings.moviesDir ||
+    vlcPath !== settings.vlcPath ||
+    omdbApiKey !== (settings.omdbApiKey ?? "")
+  );
 
   return (
     <div className="p-6 md:p-8 max-w-2xl">
@@ -79,6 +87,7 @@ export default function Settings() {
 
       {isLoading ? (
         <div className="space-y-6 animate-pulse">
+          <div className="h-16 bg-muted rounded-lg" />
           <div className="h-16 bg-muted rounded-lg" />
           <div className="h-16 bg-muted rounded-lg" />
         </div>
@@ -134,6 +143,53 @@ export default function Settings() {
               <p className="text-xs text-muted-foreground">
                 Default: <span className="font-mono">C:\Program Files\VideoLAN\VLC\vlc.exe</span>
               </p>
+            </div>
+          </div>
+
+          {/* OMDb API Key */}
+          <div className="rounded-lg border bg-card p-5 space-y-4">
+            <div className="flex items-center gap-2">
+              <Key className="h-4 w-4 text-primary" />
+              <h2 className="font-semibold text-sm">OMDb API Key</h2>
+            </div>
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              Required to fetch movie metadata (title, poster, ratings) from IMDb.
+              Get a free key at{" "}
+              <a
+                href="https://www.omdbapi.com/apikey.aspx"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-primary underline underline-offset-2"
+              >
+                omdbapi.com
+              </a>{" "}
+              — the free tier allows 1,000 requests/day.
+            </p>
+            <div className="space-y-1.5">
+              <Label htmlFor="omdbApiKey" className="text-xs">API key</Label>
+              <div className="relative">
+                <Input
+                  id="omdbApiKey"
+                  type={showApiKey ? "text" : "password"}
+                  value={omdbApiKey}
+                  onChange={(e) => setOmdbApiKey(e.target.value)}
+                  placeholder="e.g. a1b2c3d4"
+                  className="font-mono text-sm pr-10"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowApiKey((v) => !v)}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                  aria-label={showApiKey ? "Hide API key" : "Show API key"}
+                >
+                  {showApiKey ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
+              {omdbApiKey ? (
+                <p className="text-xs text-green-500">API key is set — library scans are enabled.</p>
+              ) : (
+                <p className="text-xs text-amber-500">No API key set — library scans will fail.</p>
+              )}
             </div>
           </div>
 

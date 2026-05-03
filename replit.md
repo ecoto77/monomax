@@ -1,8 +1,8 @@
-# Workspace
+# Monomax – Home Cinema
 
 ## Overview
 
-pnpm workspace monorepo using TypeScript. Each package manages its own dependencies.
+pnpm workspace monorepo using TypeScript. Personal movie library desktop app: scans a Windows movies folder, fetches IMDb metadata via OMDb API, plays movies in VLC. Packaged as a Windows Electron `.exe` installer.
 
 ## Stack
 
@@ -11,67 +11,79 @@ pnpm workspace monorepo using TypeScript. Each package manages its own dependenc
 - **Package manager**: pnpm
 - **TypeScript version**: 5.9
 - **API framework**: Express 5
-- **Database**: PostgreSQL + Drizzle ORM
+- **Database**: SQLite via Node.js built-in `node:sqlite` (no native deps) + Drizzle ORM (`sqlite-proxy` adapter)
 - **Validation**: Zod (`zod/v4`), `drizzle-zod`
-- **API codegen**: Orval (from OpenAPI spec)
-- **Build**: esbuild (CJS bundle)
+- **Build**: esbuild (ESM bundle for API server, CJS bundle for Electron)
+- **Desktop packaging**: Electron 36 + electron-builder (NSIS Windows installer)
+
+## Artifacts
+
+- `artifacts/movie-library` — React + Vite frontend (preview path `/`)
+- `artifacts/api-server` — Express backend (preview path `/api`)
+- `artifacts/electron` — Electron main process + Windows packaging
 
 ## Key Commands
 
 - `pnpm run typecheck` — full typecheck across all packages
-- `pnpm run build` — typecheck + build all packages
-- `pnpm --filter @workspace/api-spec run codegen` — regenerate API hooks and Zod schemas from OpenAPI spec
-- `pnpm --filter @workspace/db run push` — push DB schema changes (dev only)
 - `pnpm --filter @workspace/api-server run dev` — run API server locally
+- `cd artifacts/electron && node build.mjs` — compile Electron esbuild bundles
+- `cd artifacts/electron && pnpm run build:win` — full Windows installer (run on Windows)
 
-## Codegen Notes
+## Database (SQLite via node:sqlite)
 
-Orval generates a `index.ts` that exports from `./generated/types` and `./generated/api.schemas` (which may not exist).
-The codegen script in `lib/api-spec/package.json` creates a placeholder `api.schemas.ts` if missing.
-Request body schema names in `openapi.yaml` must not match the TS type names orval generates — use `MovieLookupPayload`, `MovieUpdatePayload`, `MoviePlayPayload` (not `LookupMoviesBody` etc.) to avoid TS2308 ambiguity errors.
+Uses Node.js 22+ built-in `node:sqlite` (DatabaseSync). No `better-sqlite3` or native packages needed. The Drizzle `sqlite-proxy` async adapter wraps the synchronous calls. Tables auto-created on startup via `sqlite.exec()`.
 
-## Project: Cinemarchive — Movie Library App
+**Schema: movies** — id, title, year, imdbId, plot, imdbRating, genre, director, writer, actors, poster, folderName (unique), folderPath, notFound (bool), watched (bool), userRating (int 1-5), notes, createdAt
 
-A personal movie library that scans a local Windows folder (`D:\movies`), fetches metadata from OMDB/IMDB, and lets the user play movies in VLC.
+**Schema: settings** — id, moviesDir, vlcPath, omdbApiKey
 
-### Artifacts
+Idempotent column migrations are run after `CREATE TABLE IF NOT EXISTS` via `ALTER TABLE ... ADD COLUMN` wrapped in try/catch.
 
-- `artifacts/movie-library` — React + Vite frontend (preview path `/`)
-- `artifacts/api-server` — Express backend (preview path `/api`)
-
-### Frontend Pages
+## Frontend Pages
 
 - `/` — Library grid with search + filters (title, genre, director, actor, year, min rating, watched status)
-- `/scan` — Scans `D:\movies`, looks up new folders on OMDB, shows results table
-- `/stats` — Library stats: totals, watched count, avg rating, genre pie chart, top rated, recently added
-- `/movies/:id` — Movie detail: poster, synopsis, IMDB rating, cast, director, watched toggle, personal star rating, notes, Play in VLC button, Open folder button
+- `/scan` — Scans movies folder, looks up new folders on OMDb, shows results table
+- `/stats` — Library stats: totals, watched count, avg rating, genre breakdown, top rated, recently added
+- `/movies/:id` — Movie detail: poster, synopsis, IMDb rating, cast, director, watched toggle, star rating, notes, Play in VLC, Open folder
+- `/settings` — Movies folder path, VLC path, OMDb API key
 
-### Backend Routes
+## Backend Routes
 
+- `GET /api/healthz`
 - `GET /api/movies` — List with filters: search, genre, director, actor, year, minRating, watched, sort
-- `GET /api/movies/stats` — Library statistics
-- `POST /api/movies/scan` — Scans `D:\movies`, fetches OMDB for new folders
-- `GET /api/movies/:id` — Movie detail
-- `DELETE /api/movies/:id` — Remove from library
+- `GET /api/movies/stats`
+- `POST /api/movies/scan` — Scan folder, fetch OMDb for new entries
+- `GET /api/movies/:id`
+- `DELETE /api/movies/:id`
 - `PATCH /api/movies/:id/update` — Update watched, userRating, notes
-- `GET /api/movies/:id/subtitles` — List .srt files in movie folder
-- `POST /api/movies/:id/play` — Launch VLC with optional subtitle
-- `POST /api/movies/:id/open-folder` — Open folder in Windows Explorer
+- `GET /api/movies/:id/subtitles`
+- `POST /api/movies/:id/play` — Launch VLC
+- `POST /api/movies/:id/open-folder` — Open in Explorer
+- `GET /api/settings`
+- `PATCH /api/settings`
 
-### Database Schema (movies table)
+## Environment Variables
 
-id, title, year, imdbId, plot, imdbRating, genre, director, writer, actors, poster,
-folderName (unique), folderPath, notFound (bool), watched (bool), userRating (int 1-5), notes, createdAt
+- `OMDB_API_KEY` — OMDb API key (dev fallback; stored in DB settings for Electron)
+- `PORT` — server port (set by workflow)
+- `DB_PATH` — SQLite DB path (defaults to `monomax.db` in cwd; Electron sets to `%APPDATA%/Monomax/monomax.db`)
+- `RENDERER_PATH` — Path to built frontend (Electron production only; serves SPA)
 
-### Environment Variables Required
+## Electron Build
 
-- `OMDB_API_KEY` — secret, for OMDB API calls
-- `MOVIES_DIR` — optional, defaults to `D:\movies`
-- `VLC_PATH` — optional, defaults to `C:\Program Files\VideoLAN\VLC\vlc.exe`
+Located in `artifacts/electron/`. The Electron main process:
+1. Sets `PORT=19765`, `DB_PATH`, `NODE_ENV`, `RENDERER_PATH`
+2. `require('./server')` — loads bundled Express server
+3. Waits for healthz, then opens BrowserWindow loading `http://localhost:19765`
 
-### Future: Electron packaging
+`node:sqlite` is built into Electron's Node runtime — zero native compilation needed.
 
-The app is structured to be packaged as a Windows .exe using Electron.
-The Express backend + React frontend are kept separate and web-compatible for this purpose.
+**Build on Windows** (see `artifacts/electron/HOW_TO_BUILD.md`):
+```powershell
+pnpm install
+cd artifacts\electron
+pnpm run build:win    # → release/Monomax Setup 1.0.0.exe
+```
 
-See the `pnpm-workspace` skill for workspace structure, TypeScript setup, and package details.
+> electron-builder Windows cross-compilation on Linux requires Wine (not available in Replit).
+> Always build the installer on Windows.

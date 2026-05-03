@@ -1,0 +1,42 @@
+appId: com.monomax.homecinema
+productName: Monomax
+copyright: "Monomax Home Cinema"
+
+# ─── Directories ──────────────────────────────────────────────────────────────
+directories:
+  output: release
+  buildResources: build
+
+# ─── Files packed into the app ────────────────────────────────────────────────
+# node:sqlite is built into Electron's Node runtime — no extra node_modules needed.
+files:
+  - dist/**/*
+  - package.json
+
+# ─── Extra resources (placed in resources/ beside the asar) ───────────────────
+extraResources:
+  # Built React frontend (Vite output with BASE_PATH=/)
+  - from: "../../artifacts/movie-library/dist/public"
+    to: "renderer"
+
+# ─── Windows ──────────────────────────────────────────────────────────────────
+# forceCodeSigning is false by default when no certificate is provided.
+# On Windows build machines this just produces an unsigned installer which
+# is fine for personal/internal use. Wine is NOT needed when building on Windows.
+win:
+  forceCodeSigning: false
+  target:
+    - target: nsis
+      arch:
+        - x64
+
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: true
+  shortcutName: "Monomax"
+  deleteAppDataOnUninstall: false
+
+# No native modules — node:sqlite is built into Node/Electron
+npmRebuild: false
+nodeGypRebuild: false
