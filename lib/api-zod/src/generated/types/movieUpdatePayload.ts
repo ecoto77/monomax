@@ -6,8 +6,8 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export interface ParsedMovie {
-  title: string;
-  year?: string;
-  folderName: string;
+export interface MovieUpdatePayload {
+  watched?: boolean;
+  userRating?: number;
+  notes?: string;
 }

@@ -8,7 +8,12 @@
 import type { ListMoviesSort } from "./listMoviesSort";
 
 export type ListMoviesParams = {
-  genre?: string;
   search?: string;
+  genre?: string;
+  director?: string;
+  actor?: string;
+  year?: string;
+  minRating?: string;
+  watched?: string;
   sort?: ListMoviesSort;
 };

@@ -19,5 +19,10 @@ export interface Movie {
   actors?: string;
   poster?: string;
   folderName: string;
+  folderPath: string;
+  notFound: boolean;
+  watched: boolean;
+  userRating?: number;
+  notes?: string;
   createdAt: string;
 }

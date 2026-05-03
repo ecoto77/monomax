@@ -6,9 +6,7 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export type LookupResultFailedItem = {
-  title: string;
-  year?: string;
-  folderName: string;
-  reason: string;
-};
+export interface PlayResponse {
+  success: boolean;
+  message: string;
+}

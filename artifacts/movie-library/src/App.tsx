@@ -4,7 +4,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Layout } from "@/components/layout";
 import Home from "@/pages/home";
-import Import from "@/pages/import";
+import Scan from "@/pages/scan";
 import Stats from "@/pages/stats";
 import MovieDetail from "@/pages/movie-detail";
 import NotFound from "@/pages/not-found";
@@ -16,7 +16,7 @@ function Router() {
     <Layout>
       <Switch>
         <Route path="/" component={Home} />
-        <Route path="/import" component={Import} />
+        <Route path="/scan" component={Scan} />
         <Route path="/stats" component={Stats} />
         <Route path="/movies/:id" component={MovieDetail} />
         <Route component={NotFound} />

@@ -12,13 +12,14 @@ tags:
     description: Health operations
   - name: movies
     description: Movie library operations
+  - name: library
+    description: Library scan and system operations
 paths:
   /healthz:
     get:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
@@ -33,12 +34,37 @@ paths:
       tags: [movies]
       summary: List all movies in the library
       parameters:
+        - name: search
+          in: query
+          required: false
+          schema:
+            type: string
         - name: genre
           in: query
           required: false
           schema:
             type: string
-        - name: search
+        - name: director
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: actor
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: year
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: minRating
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: watched
           in: query
           required: false
           schema:
@@ -72,45 +98,18 @@ paths:
               schema:
                 $ref: "#/components/schemas/MovieStats"
 
-  /movies/parse:
+  /movies/scan:
     post:
-      operationId: parseMovieFolders
-      tags: [movies]
-      summary: Parse folder names and extract title and year
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/ParseFoldersBody"
+      operationId: scanLibrary
+      tags: [library]
+      summary: Scan the movies folder and fetch IMDB info for new movies
       responses:
         "200":
-          description: Parsed movie info
+          description: Scan results
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/ParsedMovie"
-
-  /movies/lookup:
-    post:
-      operationId: lookupMovies
-      tags: [movies]
-      summary: Look up movies on OMDb and save results to library
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/MovieLookupPayload"
-      responses:
-        "200":
-          description: Lookup results
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/LookupResult"
+                $ref: "#/components/schemas/ScanResult"
 
   /movies/{id}:
     get:
@@ -154,7 +153,121 @@ paths:
               schema:
                 $ref: "#/components/schemas/DeleteResponse"
         "404":
-          description: Movie not found
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /movies/{id}/update:
+    patch:
+      operationId: updateMovie
+      tags: [movies]
+      summary: Update watched status, personal rating, or notes
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MovieUpdatePayload"
+      responses:
+        "200":
+          description: Updated movie
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Movie"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /movies/{id}/subtitles:
+    get:
+      operationId: getMovieSubtitles
+      tags: [movies]
+      summary: List subtitle files available for a movie
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: List of subtitle files
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/SubtitleFile"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /movies/{id}/play:
+    post:
+      operationId: playMovie
+      tags: [movies]
+      summary: Launch VLC to play the movie with optional subtitle
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MoviePlayPayload"
+      responses:
+        "200":
+          description: VLC launched
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PlayResponse"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /movies/{id}/open-folder:
+    post:
+      operationId: openMovieFolder
+      tags: [movies]
+      summary: Open the movie folder in Windows Explorer
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Folder opened
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OpenFolderResponse"
+        "404":
+          description: Not found
           content:
             application/json:
               schema:
@@ -197,6 +310,16 @@ components:
           type: string
         folderName:
           type: string
+        folderPath:
+          type: string
+        notFound:
+          type: boolean
+        watched:
+          type: boolean
+        userRating:
+          type: integer
+        notes:
+          type: string
         createdAt:
           type: string
       required:
@@ -204,12 +327,17 @@ components:
         - title
         - year
         - folderName
+        - folderPath
+        - notFound
+        - watched
         - createdAt
 
     MovieStats:
       type: object
       properties:
         total:
+          type: integer
+        watched:
           type: integer
         avgRating:
           type: number
@@ -235,71 +363,96 @@ components:
             $ref: "#/components/schemas/Movie"
       required:
         - total
+        - watched
         - avgRating
         - genreBreakdown
         - topRated
         - recentlyAdded
 
-    ParsedMovie:
+    ScanResult:
       type: object
       properties:
-        title:
-          type: string
-        year:
-          type: string
-        folderName:
-          type: string
-      required:
-        - title
-        - folderName
-
-    ParseFoldersBody:
-      type: object
-      properties:
-        folders:
-          type: array
-          items:
-            type: string
-      required:
-        - folders
-
-    MovieLookupPayload:
-      type: object
-      properties:
-        movies:
-          type: array
-          items:
-            $ref: "#/components/schemas/ParsedMovie"
-      required:
-        - movies
-
-    LookupResult:
-      type: object
-      properties:
-        saved:
-          type: array
-          items:
-            $ref: "#/components/schemas/Movie"
+        added:
+          type: integer
+        skipped:
+          type: integer
         failed:
+          type: integer
+        notFound:
+          type: integer
+        total:
+          type: integer
+        details:
           type: array
           items:
             type: object
             properties:
-              title:
-                type: string
-              year:
-                type: string
               folderName:
                 type: string
+              title:
+                type: string
+              status:
+                type: string
+                enum: [added, skipped, failed, not_found]
               reason:
                 type: string
             required:
-              - title
               - folderName
-              - reason
+              - title
+              - status
       required:
-        - saved
+        - added
+        - skipped
         - failed
+        - notFound
+        - total
+        - details
+
+    MovieUpdatePayload:
+      type: object
+      properties:
+        watched:
+          type: boolean
+        userRating:
+          type: integer
+        notes:
+          type: string
+
+    SubtitleFile:
+      type: object
+      properties:
+        name:
+          type: string
+        path:
+          type: string
+      required:
+        - name
+        - path
+
+    MoviePlayPayload:
+      type: object
+      properties:
+        subtitlePath:
+          type: string
+
+    PlayResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+      required:
+        - success
+        - message
+
+    OpenFolderResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+      required:
+        - success
 
     ErrorResponse:
       type: object

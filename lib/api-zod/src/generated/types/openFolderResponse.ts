@@ -5,8 +5,7 @@
  * API specification
  * OpenAPI spec version: 0.1.0
  */
-import type { ParsedMovie } from "./parsedMovie";
 
-export interface MovieLookupPayload {
-  movies: ParsedMovie[];
+export interface OpenFolderResponse {
+  success: boolean;
 }

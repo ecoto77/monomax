@@ -10,6 +10,7 @@ import type { MovieStatsGenreBreakdownItem } from "./movieStatsGenreBreakdownIte
 
 export interface MovieStats {
   total: number;
+  watched: number;
   avgRating: number;
   genreBreakdown: MovieStatsGenreBreakdownItem[];
   topRated: Movie[];

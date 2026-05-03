@@ -6,6 +6,6 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export interface ParseFoldersBody {
-  folders: string[];
+export interface MoviePlayPayload {
+  subtitlePath?: string;
 }

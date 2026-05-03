@@ -1,16 +1,8 @@
 import { Link, useLocation } from "wouter";
-import { Film, BarChart3, PlusSquare } from "lucide-react";
+import { Film, BarChart3, FolderSearch } from "lucide-react";
 import {
-  Sidebar,
-  SidebarContent,
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarGroupLabel,
-  SidebarHeader,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-  SidebarProvider,
+  Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel,
+  SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarProvider,
 } from "@/components/ui/sidebar";
 
 export function AppSidebar() {
@@ -18,7 +10,7 @@ export function AppSidebar() {
 
   const items = [
     { title: "Library", url: "/", icon: Film },
-    { title: "Import", url: "/import", icon: PlusSquare },
+    { title: "Scan Library", url: "/scan", icon: FolderSearch },
     { title: "Statistics", url: "/stats", icon: BarChart3 },
   ];
 

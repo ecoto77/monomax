@@ -8,7 +8,6 @@
 import * as zod from "zod";
 
 /**
- * Returns server health status
  * @summary Health check
  */
 export const HealthCheckResponse = zod.object({
@@ -19,8 +18,13 @@ export const HealthCheckResponse = zod.object({
  * @summary List all movies in the library
  */
 export const ListMoviesQueryParams = zod.object({
-  genre: zod.coerce.string().optional(),
   search: zod.coerce.string().optional(),
+  genre: zod.coerce.string().optional(),
+  director: zod.coerce.string().optional(),
+  actor: zod.coerce.string().optional(),
+  year: zod.coerce.string().optional(),
+  minRating: zod.coerce.string().optional(),
+  watched: zod.coerce.string().optional(),
   sort: zod.enum(["title", "year", "rating", "added"]).optional(),
 });
 
@@ -37,6 +41,11 @@ export const ListMoviesResponseItem = zod.object({
   actors: zod.string().optional(),
   poster: zod.string().optional(),
   folderName: zod.string(),
+  folderPath: zod.string(),
+  notFound: zod.boolean(),
+  watched: zod.boolean(),
+  userRating: zod.number().optional(),
+  notes: zod.string().optional(),
   createdAt: zod.string(),
 });
 export const ListMoviesResponse = zod.array(ListMoviesResponseItem);
@@ -46,6 +55,7 @@ export const ListMoviesResponse = zod.array(ListMoviesResponseItem);
  */
 export const GetMovieStatsResponse = zod.object({
   total: zod.number(),
+  watched: zod.number(),
   avgRating: zod.number(),
   genreBreakdown: zod.array(
     zod.object({
@@ -67,6 +77,11 @@ export const GetMovieStatsResponse = zod.object({
       actors: zod.string().optional(),
       poster: zod.string().optional(),
       folderName: zod.string(),
+      folderPath: zod.string(),
+      notFound: zod.boolean(),
+      watched: zod.boolean(),
+      userRating: zod.number().optional(),
+      notes: zod.string().optional(),
       createdAt: zod.string(),
     }),
   ),
@@ -84,64 +99,31 @@ export const GetMovieStatsResponse = zod.object({
       actors: zod.string().optional(),
       poster: zod.string().optional(),
       folderName: zod.string(),
+      folderPath: zod.string(),
+      notFound: zod.boolean(),
+      watched: zod.boolean(),
+      userRating: zod.number().optional(),
+      notes: zod.string().optional(),
       createdAt: zod.string(),
     }),
   ),
 });
 
 /**
- * @summary Parse folder names and extract title and year
+ * @summary Scan the movies folder and fetch IMDB info for new movies
  */
-export const ParseMovieFoldersBody = zod.object({
-  folders: zod.array(zod.string()),
-});
-
-export const ParseMovieFoldersResponseItem = zod.object({
-  title: zod.string(),
-  year: zod.string().optional(),
-  folderName: zod.string(),
-});
-export const ParseMovieFoldersResponse = zod.array(
-  ParseMovieFoldersResponseItem,
-);
-
-/**
- * @summary Look up movies on OMDb and save results to library
- */
-export const LookupMoviesBody = zod.object({
-  movies: zod.array(
+export const ScanLibraryResponse = zod.object({
+  added: zod.number(),
+  skipped: zod.number(),
+  failed: zod.number(),
+  notFound: zod.number(),
+  total: zod.number(),
+  details: zod.array(
     zod.object({
-      title: zod.string(),
-      year: zod.string().optional(),
       folderName: zod.string(),
-    }),
-  ),
-});
-
-export const LookupMoviesResponse = zod.object({
-  saved: zod.array(
-    zod.object({
-      id: zod.number(),
       title: zod.string(),
-      year: zod.string(),
-      imdbId: zod.string().optional(),
-      plot: zod.string().optional(),
-      imdbRating: zod.string().optional(),
-      genre: zod.string().optional(),
-      director: zod.string().optional(),
-      writer: zod.string().optional(),
-      actors: zod.string().optional(),
-      poster: zod.string().optional(),
-      folderName: zod.string(),
-      createdAt: zod.string(),
-    }),
-  ),
-  failed: zod.array(
-    zod.object({
-      title: zod.string(),
-      year: zod.string().optional(),
-      folderName: zod.string(),
-      reason: zod.string(),
+      status: zod.enum(["added", "skipped", "failed", "not_found"]),
+      reason: zod.string().optional(),
     }),
   ),
 });
@@ -166,6 +148,11 @@ export const GetMovieResponse = zod.object({
   actors: zod.string().optional(),
   poster: zod.string().optional(),
   folderName: zod.string(),
+  folderPath: zod.string(),
+  notFound: zod.boolean(),
+  watched: zod.boolean(),
+  userRating: zod.number().optional(),
+  notes: zod.string().optional(),
   createdAt: zod.string(),
 });
 
@@ -177,5 +164,81 @@ export const DeleteMovieParams = zod.object({
 });
 
 export const DeleteMovieResponse = zod.object({
+  success: zod.boolean(),
+});
+
+/**
+ * @summary Update watched status, personal rating, or notes
+ */
+export const UpdateMovieParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const UpdateMovieBody = zod.object({
+  watched: zod.boolean().optional(),
+  userRating: zod.number().optional(),
+  notes: zod.string().optional(),
+});
+
+export const UpdateMovieResponse = zod.object({
+  id: zod.number(),
+  title: zod.string(),
+  year: zod.string(),
+  imdbId: zod.string().optional(),
+  plot: zod.string().optional(),
+  imdbRating: zod.string().optional(),
+  genre: zod.string().optional(),
+  director: zod.string().optional(),
+  writer: zod.string().optional(),
+  actors: zod.string().optional(),
+  poster: zod.string().optional(),
+  folderName: zod.string(),
+  folderPath: zod.string(),
+  notFound: zod.boolean(),
+  watched: zod.boolean(),
+  userRating: zod.number().optional(),
+  notes: zod.string().optional(),
+  createdAt: zod.string(),
+});
+
+/**
+ * @summary List subtitle files available for a movie
+ */
+export const GetMovieSubtitlesParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const GetMovieSubtitlesResponseItem = zod.object({
+  name: zod.string(),
+  path: zod.string(),
+});
+export const GetMovieSubtitlesResponse = zod.array(
+  GetMovieSubtitlesResponseItem,
+);
+
+/**
+ * @summary Launch VLC to play the movie with optional subtitle
+ */
+export const PlayMovieParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const PlayMovieBody = zod.object({
+  subtitlePath: zod.string().optional(),
+});
+
+export const PlayMovieResponse = zod.object({
+  success: zod.boolean(),
+  message: zod.string(),
+});
+
+/**
+ * @summary Open the movie folder in Windows Explorer
+ */
+export const OpenMovieFolderParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const OpenMovieFolderResponse = zod.object({
   success: zod.boolean(),
 });

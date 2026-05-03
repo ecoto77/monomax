@@ -22,6 +22,11 @@ export interface Movie {
   actors?: string;
   poster?: string;
   folderName: string;
+  folderPath: string;
+  notFound: boolean;
+  watched: boolean;
+  userRating?: number;
+  notes?: string;
   createdAt: string;
 }
 
@@ -32,36 +37,61 @@ export type MovieStatsGenreBreakdownItem = {
 
 export interface MovieStats {
   total: number;
+  watched: number;
   avgRating: number;
   genreBreakdown: MovieStatsGenreBreakdownItem[];
   topRated: Movie[];
   recentlyAdded: Movie[];
 }
 
-export interface ParsedMovie {
-  title: string;
-  year?: string;
+export type ScanResultDetailsItemStatus =
+  (typeof ScanResultDetailsItemStatus)[keyof typeof ScanResultDetailsItemStatus];
+
+export const ScanResultDetailsItemStatus = {
+  added: "added",
+  skipped: "skipped",
+  failed: "failed",
+  not_found: "not_found",
+} as const;
+
+export type ScanResultDetailsItem = {
   folderName: string;
-}
-
-export interface ParseFoldersBody {
-  folders: string[];
-}
-
-export interface MovieLookupPayload {
-  movies: ParsedMovie[];
-}
-
-export type LookupResultFailedItem = {
   title: string;
-  year?: string;
-  folderName: string;
-  reason: string;
+  status: ScanResultDetailsItemStatus;
+  reason?: string;
 };
 
-export interface LookupResult {
-  saved: Movie[];
-  failed: LookupResultFailedItem[];
+export interface ScanResult {
+  added: number;
+  skipped: number;
+  failed: number;
+  notFound: number;
+  total: number;
+  details: ScanResultDetailsItem[];
+}
+
+export interface MovieUpdatePayload {
+  watched?: boolean;
+  userRating?: number;
+  notes?: string;
+}
+
+export interface SubtitleFile {
+  name: string;
+  path: string;
+}
+
+export interface MoviePlayPayload {
+  subtitlePath?: string;
+}
+
+export interface PlayResponse {
+  success: boolean;
+  message: string;
+}
+
+export interface OpenFolderResponse {
+  success: boolean;
 }
 
 export interface ErrorResponse {
@@ -73,8 +103,13 @@ export interface DeleteResponse {
 }
 
 export type ListMoviesParams = {
-  genre?: string;
   search?: string;
+  genre?: string;
+  director?: string;
+  actor?: string;
+  year?: string;
+  minRating?: string;
+  watched?: string;
   sort?: ListMoviesSort;
 };
 
