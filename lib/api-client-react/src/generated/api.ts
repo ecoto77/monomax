@@ -5,18 +5,32 @@
  * API specification
  * OpenAPI spec version: 0.1.0
  */
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import type {
+  MutationFunction,
   QueryFunction,
   QueryKey,
+  UseMutationOptions,
+  UseMutationResult,
   UseQueryOptions,
   UseQueryResult,
 } from "@tanstack/react-query";
 
-import type { HealthStatus } from "./api.schemas";
+import type {
+  DeleteResponse,
+  ErrorResponse,
+  HealthStatus,
+  ListMoviesParams,
+  LookupResult,
+  Movie,
+  MovieLookupPayload,
+  MovieStats,
+  ParseFoldersBody,
+  ParsedMovie,
+} from "./api.schemas";
 
 import { customFetch } from "../custom-fetch";
-import type { ErrorType } from "../custom-fetch";
+import type { ErrorType, BodyType } from "../custom-fetch";
 
 type AwaitedInput<T> = PromiseLike<T> | T;
 
@@ -99,3 +113,513 @@ export function useHealthCheck<
 
   return { ...query, queryKey: queryOptions.queryKey };
 }
+
+/**
+ * @summary List all movies in the library
+ */
+export const getListMoviesUrl = (params?: ListMoviesParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : value.toString());
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/movies?${stringifiedParams}`
+    : `/api/movies`;
+};
+
+export const listMovies = async (
+  params?: ListMoviesParams,
+  options?: RequestInit,
+): Promise<Movie[]> => {
+  return customFetch<Movie[]>(getListMoviesUrl(params), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getListMoviesQueryKey = (params?: ListMoviesParams) => {
+  return [`/api/movies`, ...(params ? [params] : [])] as const;
+};
+
+export const getListMoviesQueryOptions = <
+  TData = Awaited<ReturnType<typeof listMovies>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: ListMoviesParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof listMovies>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getListMoviesQueryKey(params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof listMovies>>> = ({
+    signal,
+  }) => listMovies(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof listMovies>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type ListMoviesQueryResult = NonNullable<
+  Awaited<ReturnType<typeof listMovies>>
+>;
+export type ListMoviesQueryError = ErrorType<unknown>;
+
+/**
+ * @summary List all movies in the library
+ */
+
+export function useListMovies<
+  TData = Awaited<ReturnType<typeof listMovies>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: ListMoviesParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof listMovies>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getListMoviesQueryOptions(params, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Get library statistics
+ */
+export const getGetMovieStatsUrl = () => {
+  return `/api/movies/stats`;
+};
+
+export const getMovieStats = async (
+  options?: RequestInit,
+): Promise<MovieStats> => {
+  return customFetch<MovieStats>(getGetMovieStatsUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetMovieStatsQueryKey = () => {
+  return [`/api/movies/stats`] as const;
+};
+
+export const getGetMovieStatsQueryOptions = <
+  TData = Awaited<ReturnType<typeof getMovieStats>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof getMovieStats>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetMovieStatsQueryKey();
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getMovieStats>>> = ({
+    signal,
+  }) => getMovieStats({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getMovieStats>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetMovieStatsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getMovieStats>>
+>;
+export type GetMovieStatsQueryError = ErrorType<unknown>;
+
+/**
+ * @summary Get library statistics
+ */
+
+export function useGetMovieStats<
+  TData = Awaited<ReturnType<typeof getMovieStats>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof getMovieStats>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetMovieStatsQueryOptions(options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Parse folder names and extract title and year
+ */
+export const getParseMovieFoldersUrl = () => {
+  return `/api/movies/parse`;
+};
+
+export const parseMovieFolders = async (
+  parseFoldersBody: ParseFoldersBody,
+  options?: RequestInit,
+): Promise<ParsedMovie[]> => {
+  return customFetch<ParsedMovie[]>(getParseMovieFoldersUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(parseFoldersBody),
+  });
+};
+
+export const getParseMovieFoldersMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof parseMovieFolders>>,
+    TError,
+    { data: BodyType<ParseFoldersBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof parseMovieFolders>>,
+  TError,
+  { data: BodyType<ParseFoldersBody> },
+  TContext
+> => {
+  const mutationKey = ["parseMovieFolders"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof parseMovieFolders>>,
+    { data: BodyType<ParseFoldersBody> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return parseMovieFolders(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type ParseMovieFoldersMutationResult = NonNullable<
+  Awaited<ReturnType<typeof parseMovieFolders>>
+>;
+export type ParseMovieFoldersMutationBody = BodyType<ParseFoldersBody>;
+export type ParseMovieFoldersMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Parse folder names and extract title and year
+ */
+export const useParseMovieFolders = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof parseMovieFolders>>,
+    TError,
+    { data: BodyType<ParseFoldersBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof parseMovieFolders>>,
+  TError,
+  { data: BodyType<ParseFoldersBody> },
+  TContext
+> => {
+  return useMutation(getParseMovieFoldersMutationOptions(options));
+};
+
+/**
+ * @summary Look up movies on OMDb and save results to library
+ */
+export const getLookupMoviesUrl = () => {
+  return `/api/movies/lookup`;
+};
+
+export const lookupMovies = async (
+  movieLookupPayload: MovieLookupPayload,
+  options?: RequestInit,
+): Promise<LookupResult> => {
+  return customFetch<LookupResult>(getLookupMoviesUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(movieLookupPayload),
+  });
+};
+
+export const getLookupMoviesMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof lookupMovies>>,
+    TError,
+    { data: BodyType<MovieLookupPayload> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof lookupMovies>>,
+  TError,
+  { data: BodyType<MovieLookupPayload> },
+  TContext
+> => {
+  const mutationKey = ["lookupMovies"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof lookupMovies>>,
+    { data: BodyType<MovieLookupPayload> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return lookupMovies(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type LookupMoviesMutationResult = NonNullable<
+  Awaited<ReturnType<typeof lookupMovies>>
+>;
+export type LookupMoviesMutationBody = BodyType<MovieLookupPayload>;
+export type LookupMoviesMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Look up movies on OMDb and save results to library
+ */
+export const useLookupMovies = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof lookupMovies>>,
+    TError,
+    { data: BodyType<MovieLookupPayload> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof lookupMovies>>,
+  TError,
+  { data: BodyType<MovieLookupPayload> },
+  TContext
+> => {
+  return useMutation(getLookupMoviesMutationOptions(options));
+};
+
+/**
+ * @summary Get a movie by ID
+ */
+export const getGetMovieUrl = (id: number) => {
+  return `/api/movies/${id}`;
+};
+
+export const getMovie = async (
+  id: number,
+  options?: RequestInit,
+): Promise<Movie> => {
+  return customFetch<Movie>(getGetMovieUrl(id), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetMovieQueryKey = (id: number) => {
+  return [`/api/movies/${id}`] as const;
+};
+
+export const getGetMovieQueryOptions = <
+  TData = Awaited<ReturnType<typeof getMovie>>,
+  TError = ErrorType<ErrorResponse>,
+>(
+  id: number,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getMovie>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetMovieQueryKey(id);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getMovie>>> = ({
+    signal,
+  }) => getMovie(id, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!id,
+    ...queryOptions,
+  } as UseQueryOptions<Awaited<ReturnType<typeof getMovie>>, TError, TData> & {
+    queryKey: QueryKey;
+  };
+};
+
+export type GetMovieQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getMovie>>
+>;
+export type GetMovieQueryError = ErrorType<ErrorResponse>;
+
+/**
+ * @summary Get a movie by ID
+ */
+
+export function useGetMovie<
+  TData = Awaited<ReturnType<typeof getMovie>>,
+  TError = ErrorType<ErrorResponse>,
+>(
+  id: number,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getMovie>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetMovieQueryOptions(id, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Remove a movie from the library
+ */
+export const getDeleteMovieUrl = (id: number) => {
+  return `/api/movies/${id}`;
+};
+
+export const deleteMovie = async (
+  id: number,
+  options?: RequestInit,
+): Promise<DeleteResponse> => {
+  return customFetch<DeleteResponse>(getDeleteMovieUrl(id), {
+    ...options,
+    method: "DELETE",
+  });
+};
+
+export const getDeleteMovieMutationOptions = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof deleteMovie>>,
+    TError,
+    { id: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof deleteMovie>>,
+  TError,
+  { id: number },
+  TContext
+> => {
+  const mutationKey = ["deleteMovie"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof deleteMovie>>,
+    { id: number }
+  > = (props) => {
+    const { id } = props ?? {};
+
+    return deleteMovie(id, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type DeleteMovieMutationResult = NonNullable<
+  Awaited<ReturnType<typeof deleteMovie>>
+>;
+
+export type DeleteMovieMutationError = ErrorType<ErrorResponse>;
+
+/**
+ * @summary Remove a movie from the library
+ */
+export const useDeleteMovie = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof deleteMovie>>,
+    TError,
+    { id: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof deleteMovie>>,
+  TError,
+  { id: number },
+  TContext
+> => {
+  return useMutation(getDeleteMovieMutationOptions(options));
+};

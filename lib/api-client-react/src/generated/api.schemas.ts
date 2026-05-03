@@ -8,3 +8,82 @@
 export interface HealthStatus {
   status: string;
 }
+
+export interface Movie {
+  id: number;
+  title: string;
+  year: string;
+  imdbId?: string;
+  plot?: string;
+  imdbRating?: string;
+  genre?: string;
+  director?: string;
+  writer?: string;
+  actors?: string;
+  poster?: string;
+  folderName: string;
+  createdAt: string;
+}
+
+export type MovieStatsGenreBreakdownItem = {
+  genre: string;
+  count: number;
+};
+
+export interface MovieStats {
+  total: number;
+  avgRating: number;
+  genreBreakdown: MovieStatsGenreBreakdownItem[];
+  topRated: Movie[];
+  recentlyAdded: Movie[];
+}
+
+export interface ParsedMovie {
+  title: string;
+  year?: string;
+  folderName: string;
+}
+
+export interface ParseFoldersBody {
+  folders: string[];
+}
+
+export interface MovieLookupPayload {
+  movies: ParsedMovie[];
+}
+
+export type LookupResultFailedItem = {
+  title: string;
+  year?: string;
+  folderName: string;
+  reason: string;
+};
+
+export interface LookupResult {
+  saved: Movie[];
+  failed: LookupResultFailedItem[];
+}
+
+export interface ErrorResponse {
+  error: string;
+}
+
+export interface DeleteResponse {
+  success: boolean;
+}
+
+export type ListMoviesParams = {
+  genre?: string;
+  search?: string;
+  sort?: ListMoviesSort;
+};
+
+export type ListMoviesSort =
+  (typeof ListMoviesSort)[keyof typeof ListMoviesSort];
+
+export const ListMoviesSort = {
+  title: "title",
+  year: "year",
+  rating: "rating",
+  added: "added",
+} as const;

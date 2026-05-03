@@ -10,6 +10,8 @@ servers:
 tags:
   - name: health
     description: Health operations
+  - name: movies
+    description: Movie library operations
 paths:
   /healthz:
     get:
@@ -24,6 +26,140 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /movies:
+    get:
+      operationId: listMovies
+      tags: [movies]
+      summary: List all movies in the library
+      parameters:
+        - name: genre
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: search
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: sort
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [title, year, rating, added]
+      responses:
+        "200":
+          description: List of movies
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Movie"
+
+  /movies/stats:
+    get:
+      operationId: getMovieStats
+      tags: [movies]
+      summary: Get library statistics
+      responses:
+        "200":
+          description: Library stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MovieStats"
+
+  /movies/parse:
+    post:
+      operationId: parseMovieFolders
+      tags: [movies]
+      summary: Parse folder names and extract title and year
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ParseFoldersBody"
+      responses:
+        "200":
+          description: Parsed movie info
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ParsedMovie"
+
+  /movies/lookup:
+    post:
+      operationId: lookupMovies
+      tags: [movies]
+      summary: Look up movies on OMDb and save results to library
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MovieLookupPayload"
+      responses:
+        "200":
+          description: Lookup results
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LookupResult"
+
+  /movies/{id}:
+    get:
+      operationId: getMovie
+      tags: [movies]
+      summary: Get a movie by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Movie details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Movie"
+        "404":
+          description: Movie not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    delete:
+      operationId: deleteMovie
+      tags: [movies]
+      summary: Remove a movie from the library
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Movie deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DeleteResponse"
+        "404":
+          description: Movie not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
 components:
   schemas:
     HealthStatus:
@@ -34,3 +170,149 @@ components:
       required:
         - status
 
+    Movie:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        year:
+          type: string
+        imdbId:
+          type: string
+        plot:
+          type: string
+        imdbRating:
+          type: string
+        genre:
+          type: string
+        director:
+          type: string
+        writer:
+          type: string
+        actors:
+          type: string
+        poster:
+          type: string
+        folderName:
+          type: string
+        createdAt:
+          type: string
+      required:
+        - id
+        - title
+        - year
+        - folderName
+        - createdAt
+
+    MovieStats:
+      type: object
+      properties:
+        total:
+          type: integer
+        avgRating:
+          type: number
+        genreBreakdown:
+          type: array
+          items:
+            type: object
+            properties:
+              genre:
+                type: string
+              count:
+                type: integer
+            required:
+              - genre
+              - count
+        topRated:
+          type: array
+          items:
+            $ref: "#/components/schemas/Movie"
+        recentlyAdded:
+          type: array
+          items:
+            $ref: "#/components/schemas/Movie"
+      required:
+        - total
+        - avgRating
+        - genreBreakdown
+        - topRated
+        - recentlyAdded
+
+    ParsedMovie:
+      type: object
+      properties:
+        title:
+          type: string
+        year:
+          type: string
+        folderName:
+          type: string
+      required:
+        - title
+        - folderName
+
+    ParseFoldersBody:
+      type: object
+      properties:
+        folders:
+          type: array
+          items:
+            type: string
+      required:
+        - folders
+
+    MovieLookupPayload:
+      type: object
+      properties:
+        movies:
+          type: array
+          items:
+            $ref: "#/components/schemas/ParsedMovie"
+      required:
+        - movies
+
+    LookupResult:
+      type: object
+      properties:
+        saved:
+          type: array
+          items:
+            $ref: "#/components/schemas/Movie"
+        failed:
+          type: array
+          items:
+            type: object
+            properties:
+              title:
+                type: string
+              year:
+                type: string
+              folderName:
+                type: string
+              reason:
+                type: string
+            required:
+              - title
+              - folderName
+              - reason
+      required:
+        - saved
+        - failed
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+      required:
+        - error
+
+    DeleteResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+      required:
+        - success

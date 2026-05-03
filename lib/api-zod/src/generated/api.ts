@@ -14,3 +14,168 @@ import * as zod from "zod";
 export const HealthCheckResponse = zod.object({
   status: zod.string(),
 });
+
+/**
+ * @summary List all movies in the library
+ */
+export const ListMoviesQueryParams = zod.object({
+  genre: zod.coerce.string().optional(),
+  search: zod.coerce.string().optional(),
+  sort: zod.enum(["title", "year", "rating", "added"]).optional(),
+});
+
+export const ListMoviesResponseItem = zod.object({
+  id: zod.number(),
+  title: zod.string(),
+  year: zod.string(),
+  imdbId: zod.string().optional(),
+  plot: zod.string().optional(),
+  imdbRating: zod.string().optional(),
+  genre: zod.string().optional(),
+  director: zod.string().optional(),
+  writer: zod.string().optional(),
+  actors: zod.string().optional(),
+  poster: zod.string().optional(),
+  folderName: zod.string(),
+  createdAt: zod.string(),
+});
+export const ListMoviesResponse = zod.array(ListMoviesResponseItem);
+
+/**
+ * @summary Get library statistics
+ */
+export const GetMovieStatsResponse = zod.object({
+  total: zod.number(),
+  avgRating: zod.number(),
+  genreBreakdown: zod.array(
+    zod.object({
+      genre: zod.string(),
+      count: zod.number(),
+    }),
+  ),
+  topRated: zod.array(
+    zod.object({
+      id: zod.number(),
+      title: zod.string(),
+      year: zod.string(),
+      imdbId: zod.string().optional(),
+      plot: zod.string().optional(),
+      imdbRating: zod.string().optional(),
+      genre: zod.string().optional(),
+      director: zod.string().optional(),
+      writer: zod.string().optional(),
+      actors: zod.string().optional(),
+      poster: zod.string().optional(),
+      folderName: zod.string(),
+      createdAt: zod.string(),
+    }),
+  ),
+  recentlyAdded: zod.array(
+    zod.object({
+      id: zod.number(),
+      title: zod.string(),
+      year: zod.string(),
+      imdbId: zod.string().optional(),
+      plot: zod.string().optional(),
+      imdbRating: zod.string().optional(),
+      genre: zod.string().optional(),
+      director: zod.string().optional(),
+      writer: zod.string().optional(),
+      actors: zod.string().optional(),
+      poster: zod.string().optional(),
+      folderName: zod.string(),
+      createdAt: zod.string(),
+    }),
+  ),
+});
+
+/**
+ * @summary Parse folder names and extract title and year
+ */
+export const ParseMovieFoldersBody = zod.object({
+  folders: zod.array(zod.string()),
+});
+
+export const ParseMovieFoldersResponseItem = zod.object({
+  title: zod.string(),
+  year: zod.string().optional(),
+  folderName: zod.string(),
+});
+export const ParseMovieFoldersResponse = zod.array(
+  ParseMovieFoldersResponseItem,
+);
+
+/**
+ * @summary Look up movies on OMDb and save results to library
+ */
+export const LookupMoviesBody = zod.object({
+  movies: zod.array(
+    zod.object({
+      title: zod.string(),
+      year: zod.string().optional(),
+      folderName: zod.string(),
+    }),
+  ),
+});
+
+export const LookupMoviesResponse = zod.object({
+  saved: zod.array(
+    zod.object({
+      id: zod.number(),
+      title: zod.string(),
+      year: zod.string(),
+      imdbId: zod.string().optional(),
+      plot: zod.string().optional(),
+      imdbRating: zod.string().optional(),
+      genre: zod.string().optional(),
+      director: zod.string().optional(),
+      writer: zod.string().optional(),
+      actors: zod.string().optional(),
+      poster: zod.string().optional(),
+      folderName: zod.string(),
+      createdAt: zod.string(),
+    }),
+  ),
+  failed: zod.array(
+    zod.object({
+      title: zod.string(),
+      year: zod.string().optional(),
+      folderName: zod.string(),
+      reason: zod.string(),
+    }),
+  ),
+});
+
+/**
+ * @summary Get a movie by ID
+ */
+export const GetMovieParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const GetMovieResponse = zod.object({
+  id: zod.number(),
+  title: zod.string(),
+  year: zod.string(),
+  imdbId: zod.string().optional(),
+  plot: zod.string().optional(),
+  imdbRating: zod.string().optional(),
+  genre: zod.string().optional(),
+  director: zod.string().optional(),
+  writer: zod.string().optional(),
+  actors: zod.string().optional(),
+  poster: zod.string().optional(),
+  folderName: zod.string(),
+  createdAt: zod.string(),
+});
+
+/**
+ * @summary Remove a movie from the library
+ */
+export const DeleteMovieParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const DeleteMovieResponse = zod.object({
+  success: zod.boolean(),
+});

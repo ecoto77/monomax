@@ -6,4 +6,16 @@
  * OpenAPI spec version: 0.1.0
  */
 
+export * from "./deleteResponse";
+export * from "./errorResponse";
 export * from "./healthStatus";
+export * from "./listMoviesParams";
+export * from "./listMoviesSort";
+export * from "./lookupResult";
+export * from "./lookupResultFailedItem";
+export * from "./movie";
+export * from "./movieLookupPayload";
+export * from "./movieStats";
+export * from "./movieStatsGenreBreakdownItem";
+export * from "./parsedMovie";
+export * from "./parseFoldersBody";
