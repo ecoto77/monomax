@@ -8,6 +8,7 @@ import Scan from "@/pages/scan";
 import Stats from "@/pages/stats";
 import MovieDetail from "@/pages/movie-detail";
 import NotFound from "@/pages/not-found";
+import SettingsPage from "@/pages/settings";
 
 const queryClient = new QueryClient();
 
@@ -18,6 +19,7 @@ function Router() {
         <Route path="/" component={Home} />
         <Route path="/scan" component={Scan} />
         <Route path="/stats" component={Stats} />
+        <Route path="/settings" component={SettingsPage} />
         <Route path="/movies/:id" component={MovieDetail} />
         <Route component={NotFound} />
       </Switch>

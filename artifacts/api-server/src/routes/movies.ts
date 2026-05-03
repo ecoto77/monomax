@@ -15,11 +15,10 @@ import {
   PlayMovieBody,
   OpenMovieFolderParams,
 } from "@workspace/api-zod";
+import { getOrCreateSettings } from "./settings";
 
 const router: IRouter = Router();
 
-const MOVIES_DIR = process.env["MOVIES_DIR"] || "D:\\movies";
-const VLC_PATH = process.env["VLC_PATH"] || "C:\\Program Files\\VideoLAN\\VLC\\vlc.exe";
 const VIDEO_EXTENSIONS = [".mkv", ".mp4", ".avi", ".mov", ".wmv", ".m4v", ".ts", ".m2ts", ".flv", ".webm"];
 const SUBTITLE_EXTENSIONS = [".srt", ".sub", ".ass", ".ssa", ".vtt"];
 
@@ -145,17 +144,20 @@ router.post("/movies/scan", async (req, res) => {
     return;
   }
 
+  const settings = await getOrCreateSettings();
+  const moviesDir = settings.moviesDir;
+
   let folderNames: string[] = [];
   try {
-    folderNames = fs.readdirSync(MOVIES_DIR).filter((f) => {
+    folderNames = fs.readdirSync(moviesDir).filter((f) => {
       try {
-        return fs.statSync(path.join(MOVIES_DIR, f)).isDirectory();
+        return fs.statSync(path.join(moviesDir, f)).isDirectory();
       } catch {
         return false;
       }
     });
-  } catch (err) {
-    res.status(500).json({ error: `Cannot read movies directory: ${MOVIES_DIR}` });
+  } catch {
+    res.status(500).json({ error: `Cannot read movies directory: ${moviesDir}` });
     return;
   }
 
@@ -163,7 +165,7 @@ router.post("/movies/scan", async (req, res) => {
   let added = 0, skipped = 0, failed = 0, notFound = 0;
 
   for (const folderName of folderNames) {
-    const folderPath = path.join(MOVIES_DIR, folderName);
+    const folderPath = path.join(moviesDir, folderName);
     const { title, year } = parseMovieFolderName(folderName);
 
     const existing = await db
@@ -296,13 +298,16 @@ router.post("/movies/:id/play", async (req, res) => {
     return;
   }
 
+  const settings = await getOrCreateSettings();
+  const vlcPath = settings.vlcPath;
+
   const args = [videoFile];
   if (body.subtitlePath) {
     args.push("--sub-file", body.subtitlePath);
   }
 
   try {
-    spawn(VLC_PATH, args, { detached: true, stdio: "ignore" }).unref();
+    spawn(vlcPath, args, { detached: true, stdio: "ignore" }).unref();
     res.json({ success: true, message: `Launching VLC for: ${path.basename(videoFile)}` });
   } catch (err) {
     res.status(500).json({ success: false, message: `Failed to launch VLC: ${err}` });

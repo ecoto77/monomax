@@ -233,6 +233,29 @@ export const PlayMovieResponse = zod.object({
 });
 
 /**
+ * @summary Get current app settings
+ */
+export const GetSettingsResponse = zod.object({
+  id: zod.number(),
+  moviesDir: zod.string(),
+  vlcPath: zod.string(),
+});
+
+/**
+ * @summary Update app settings
+ */
+export const UpdateSettingsBody = zod.object({
+  moviesDir: zod.string().optional(),
+  vlcPath: zod.string().optional(),
+});
+
+export const UpdateSettingsResponse = zod.object({
+  id: zod.number(),
+  moviesDir: zod.string(),
+  vlcPath: zod.string(),
+});
+
+/**
  * @summary Open the movie folder in Windows Explorer
  */
 export const OpenMovieFolderParams = zod.object({

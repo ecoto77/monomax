@@ -1,5 +1,5 @@
 import { Link, useLocation } from "wouter";
-import { Film, BarChart3, FolderSearch } from "lucide-react";
+import { Film, BarChart3, FolderSearch, Settings } from "lucide-react";
 import {
   Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel,
   SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarProvider,
@@ -12,6 +12,7 @@ export function AppSidebar() {
     { title: "Library", url: "/", icon: Film },
     { title: "Scan Library", url: "/scan", icon: FolderSearch },
     { title: "Statistics", url: "/stats", icon: BarChart3 },
+    { title: "Settings", url: "/settings", icon: Settings },
   ];
 
   return (

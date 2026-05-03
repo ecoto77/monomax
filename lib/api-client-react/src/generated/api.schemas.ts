@@ -98,6 +98,17 @@ export interface ErrorResponse {
   error: string;
 }
 
+export interface AppSettings {
+  id: number;
+  moviesDir: string;
+  vlcPath: string;
+}
+
+export interface AppSettingsPayload {
+  moviesDir?: string;
+  vlcPath?: string;
+}
+
 export interface DeleteResponse {
   success: boolean;
 }

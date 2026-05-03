@@ -248,6 +248,36 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
 
+  /settings:
+    get:
+      operationId: getSettings
+      tags: [library]
+      summary: Get current app settings
+      responses:
+        "200":
+          description: Settings
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AppSettings"
+    patch:
+      operationId: updateSettings
+      tags: [library]
+      summary: Update app settings
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AppSettingsPayload"
+      responses:
+        "200":
+          description: Updated settings
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AppSettings"
+
   /movies/{id}/open-folder:
     post:
       operationId: openMovieFolder
@@ -461,6 +491,28 @@ components:
           type: string
       required:
         - error
+
+    AppSettings:
+      type: object
+      properties:
+        id:
+          type: integer
+        moviesDir:
+          type: string
+        vlcPath:
+          type: string
+      required:
+        - id
+        - moviesDir
+        - vlcPath
+
+    AppSettingsPayload:
+      type: object
+      properties:
+        moviesDir:
+          type: string
+        vlcPath:
+          type: string
 
     DeleteResponse:
       type: object
