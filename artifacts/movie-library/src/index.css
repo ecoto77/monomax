@@ -66,78 +66,67 @@
   --radius-xl: calc(var(--radius) + 4px);
 }
 
+/* Monomax dark theme — matches the charcoal-navy logo background */
 :root {
-  --background: 0 0% 98%;
-  --foreground: 240 10% 3.9%;
-  --card: 0 0% 100%;
-  --card-foreground: 240 10% 3.9%;
-  --popover: 0 0% 100%;
-  --popover-foreground: 240 10% 3.9%;
-  --primary: 43 96% 56%;
-  --primary-foreground: 26 83% 14%;
-  --secondary: 240 4.8% 95.9%;
-  --secondary-foreground: 240 5.9% 10%;
-  --muted: 240 4.8% 95.9%;
-  --muted-foreground: 240 3.8% 46.1%;
-  --accent: 240 4.8% 95.9%;
-  --accent-foreground: 240 5.9% 10%;
-  --destructive: 0 84.2% 60.2%;
-  --destructive-foreground: 0 0% 98%;
-  --border: 240 5.9% 90%;
-  --input: 240 5.9% 90%;
-  --ring: 43 96% 56%;
-  --chart-1: 43 96% 56%;
-  --chart-2: 173 58% 39%;
-  --chart-3: 197 37% 24%;
-  --chart-4: 27 87% 67%;
-  --chart-5: 212 92% 45%;
+  --background: 222 24% 13%;
+  --foreground: 215 20% 92%;
+
+  --card: 222 22% 17%;
+  --card-foreground: 215 20% 92%;
+  --card-border: 222 18% 24%;
+
+  --popover: 222 22% 15%;
+  --popover-foreground: 215 20% 92%;
+  --popover-border: 222 18% 24%;
+
+  /* Red from the film-reel icon */
+  --primary: 4 78% 55%;
+  --primary-foreground: 0 0% 100%;
+  --primary-border: hsl(4 78% 45%);
+
+  --secondary: 222 18% 22%;
+  --secondary-foreground: 215 15% 80%;
+  --secondary-border: hsl(222 15% 28%);
+
+  --muted: 222 18% 20%;
+  --muted-foreground: 215 12% 55%;
+  --muted-border: hsl(222 14% 26%);
+
+  --accent: 222 18% 22%;
+  --accent-foreground: 215 20% 92%;
+  --accent-border: hsl(222 15% 28%);
+
+  --destructive: 0 68% 50%;
+  --destructive-foreground: 0 0% 100%;
+  --destructive-border: hsl(0 68% 40%);
+
+  --border: 222 18% 24%;
+  --input: 222 18% 22%;
+  --ring: 4 78% 55%;
+
+  --chart-1: 4 78% 55%;
+  --chart-2: 207 70% 52%;
+  --chart-3: 150 55% 42%;
+  --chart-4: 38 88% 58%;
+  --chart-5: 270 55% 60%;
+
   --radius: 0.5rem;
-  --sidebar-background: 240 5.9% 10%;
-  --sidebar-foreground: 240 4.8% 95.9%;
-  --sidebar-primary: 43 96% 56%;
-  --sidebar-primary-foreground: 26 83% 14%;
-  --sidebar-accent: 240 3.7% 15.9%;
-  --sidebar-accent-foreground: 240 4.8% 95.9%;
-  --sidebar-border: 240 3.7% 15.9%;
-  --sidebar-ring: 43 96% 56%;
-  --app-font-sans: 'Outfit', sans-serif;
+
+  /* Sidebar — slightly darker than main bg */
+  --sidebar: 222 28% 10%;
+  --sidebar-foreground: 215 20% 85%;
+  --sidebar-border: 222 18% 18%;
+  --sidebar-primary: 4 78% 55%;
+  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-primary-border: hsl(4 78% 45%);
+  --sidebar-accent: 222 22% 17%;
+  --sidebar-accent-foreground: 215 20% 92%;
+  --sidebar-accent-border: hsl(222 18% 22%);
+  --sidebar-ring: 4 78% 55%;
+
+  --app-font-sans: 'Outfit', 'Inter', sans-serif;
   --app-font-serif: Georgia, serif;
   --app-font-mono: Menlo, monospace;
-}
-
-.dark {
-  --background: 240 10% 3.9%;
-  --foreground: 0 0% 98%;
-  --card: 240 10% 3.9%;
-  --card-foreground: 0 0% 98%;
-  --popover: 240 10% 3.9%;
-  --popover-foreground: 0 0% 98%;
-  --primary: 43 96% 56%;
-  --primary-foreground: 26 83% 14%;
-  --secondary: 240 3.7% 15.9%;
-  --secondary-foreground: 0 0% 98%;
-  --muted: 240 3.7% 15.9%;
-  --muted-foreground: 240 5% 64.9%;
-  --accent: 240 3.7% 15.9%;
-  --accent-foreground: 0 0% 98%;
-  --destructive: 0 62.8% 30.6%;
-  --destructive-foreground: 0 0% 98%;
-  --border: 240 3.7% 15.9%;
-  --input: 240 3.7% 15.9%;
-  --ring: 43 96% 56%;
-  --chart-1: 43 96% 56%;
-  --chart-2: 173 58% 39%;
-  --chart-3: 197 37% 24%;
-  --chart-4: 27 87% 67%;
-  --chart-5: 212 92% 45%;
-  --sidebar-background: 240 10% 3.9%;
-  --sidebar-foreground: 240 4.8% 95.9%;
-  --sidebar-primary: 43 96% 56%;
-  --sidebar-primary-foreground: 26 83% 14%;
-  --sidebar-accent: 240 3.7% 15.9%;
-  --sidebar-accent-foreground: 240 4.8% 95.9%;
-  --sidebar-border: 240 3.7% 15.9%;
-  --sidebar-ring: 43 96% 56%;
 }
 
 @layer base {
