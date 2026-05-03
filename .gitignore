@@ -47,3 +47,11 @@ Thumbs.db
 # Replit
 .cache/
 .local/
+
+# SQLite database
+*.db
+monomax.db
+
+# Electron release output
+artifacts/electron/release/
+artifacts/electron/dist/
